@@ -1,8 +1,9 @@
-// functions/qr.jsx
+// functions/qr.js (نام فایل رو تغییر بده)
 import { toDataURL } from 'qrcode';
 
 // این کتابخانه خالص JS هست و روی Workers عالی کار می‌کنه
-export const onRequest = async ({ request }) => {
+export async function onRequestGet(context) {  // تغییر به onRequestGet
+  const { request } = context;
   const url = new URL(request.url);
   const text = url.searchParams.get('text') || url.searchParams.get('t') || 'https://example.com';
 
@@ -39,17 +40,17 @@ export const onRequest = async ({ request }) => {
     const bgArrayBuffer = await bgResponse.arrayBuffer();
     const bgBuffer = new Uint8Array(bgArrayBuffer);
 
-    // ترکیب QR روی بک‌گراند با Canvas خالص (بدون DOM!)
-    // از @cf-wasm/imaging استفاده می‌کنیم که رسمی Cloudflare هست
-    const { Image } = await import('@cf-wasm/imaging');
+    // ترکیب QR روی بک‌گراند
+    // نکته: اگر @cf-wasm/imaging کار نکرد، جایگزین کن با @cf-wasm/png یا sharp (با nodejs_compat)
+    const { Image } = await import('@cf-wasm/imaging');  // اگر error داد، پکیج رو چک کن
 
     const background = await Image.fromArrayBuffer(bgBuffer);
     const qrImage = await Image.fromArrayBuffer(qrBuffer);
 
-    // تغییر اندازه QR به ۵۵۰x۵۵۰ (یا هر سایزی که دوست داری)
+    // تغییر اندازه QR به ۵۵۰x۵۵۰
     qrImage.resize(550, 550);
 
-    // قرار دادن QR در مرکز بک‌گراند
+    // قرار دادن QR در مرکز
     background.composite(qrImage, {
       top: (background.height - 550) / 2,
       left: (background.width - 550) / 2,
