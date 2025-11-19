@@ -1,8 +1,2 @@
-name = "qr-maker"
-main = "_worker.js"
 compatibility_date = "2025-11-19"
 compatibility_flags = ["nodejs_compat"]
-
-[[functions]]
-  directory = "functions"
-  compatibility_flags = ["nodejs_compat"]
