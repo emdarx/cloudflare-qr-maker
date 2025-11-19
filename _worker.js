@@ -1,12 +1,3 @@
-
-
-export default {
-  async fetch(request, env, ctx) {
-
-    return await env.ASSETS.fetch(request);
-  }
-};
-
-export const config = {
-  path: "/*"
-};
+export function onRequest(context) {
+  return context.next();
+}
