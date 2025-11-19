@@ -1,14 +1,16 @@
-
 {
-  "name": "qr-overlay-worker",
+  "name": "cf-qr-generator",
   "version": "1.0.0",
-  "description": "Reliable QR code overlay service for Cloudflare Workers.",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "dev": "wrangler pages dev ./ --compatibility-date=2024-01-01",
+    "build": "echo 'Cloudflare Pages handles build automatically'",
+    "start": "wrangler pages dev ./"
   },
   "dependencies": {
-    "qrious": "^4.0.2"
+    "@vercel/og": "0.6.2",
+    "qrcode": "1.5.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   }
 }
