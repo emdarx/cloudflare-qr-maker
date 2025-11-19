@@ -1,13 +1,14 @@
+
 {
-  "name": "qr-overlay-service",
+  "name": "qr-overlay-worker",
   "version": "1.0.0",
-  "description": "Generate QR code overlaid on a background image using Cloudflare Pages",
+  "description": "Reliable QR code overlay service for Cloudflare Workers.",
+  "main": "index.js",
   "scripts": {
-    "build": "" 
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@vercel/og": "^0.6.0",
-    "qrcode": "^1.5.3",
-    "react": "^18.2.0"
+    "qrious": "^4.0.2"
   }
 }
