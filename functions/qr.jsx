@@ -14,11 +14,8 @@ export async function onRequest(context) {
     return new Response('لطفا پارامتر text را ارسال کنید', { status: 400 });
   }
 
-  // --- اصلاح آدرس‌دهی ---
-  // آدرس کامل سایت (مثلاً: https://qr-maker-git.pages.dev)
-  const origin = new URL(context.request.url).origin;
-  // آدرس کامل عکس پس‌زمینه
-  const backgroundImageUrl = `${origin}/qr-background.jpg`; 
+
+  const backgroundImageUrl = `https://i.ibb.co/fJ7nmz8/qr.jpg`; 
   // -----------------------
 
   // 1. تولید کد QR به صورت Data URL
