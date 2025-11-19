@@ -1,7 +1,7 @@
 import { ImageResponse } from '@vercel/og';
 import QRCode from 'qrcode';
 
-// تنظیمات Edge Runtime برای سازگاری با @vercel/og
+// تنظیمات Edge Runtime
 export const config = {
   runtime: 'edge', 
 };
@@ -14,8 +14,12 @@ export async function onRequest(context) {
     return new Response('لطفا پارامتر text را ارسال کنید', { status: 400 });
   }
 
-  // آدرس‌دهی به عکس پس‌زمینه در پوشه public
-  const backgroundImageUrl = new URL('/qr-background.jpg', context.request.url).origin + '/qr-background.jpg';
+  // --- اصلاح آدرس‌دهی ---
+  // آدرس کامل سایت (مثلاً: https://qr-maker-git.pages.dev)
+  const origin = new URL(context.request.url).origin;
+  // آدرس کامل عکس پس‌زمینه
+  const backgroundImageUrl = `${origin}/qr-background.jpg`; 
+  // -----------------------
 
   // 1. تولید کد QR به صورت Data URL
   const qrDataUrl = await QRCode.toDataURL(link, {
@@ -34,21 +38,18 @@ export async function onRequest(context) {
           display: 'flex',
           height: '100%',
           width: '100%',
-          // استفاده از عکس پس زمینه
           backgroundImage: `url(${backgroundImageUrl})`,
           backgroundSize: '100% 100%',
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
-        {/* تنظیم موقعیت QR Code */}
         <img
           src={qrDataUrl}
           style={{
             width: '450px', 
             height: '450px',
-            // این مقدار (50px) را بعداً باید دقیقاً تنظیم کنید تا فیت کادر سفید روی عکس شما شود
-            marginTop: '50px', 
+            marginTop: '50px', // تنظیم موقعیت
           }}
         />
         
