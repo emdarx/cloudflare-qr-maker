@@ -1,9 +1,8 @@
-// functions/qr.js (نام فایل رو تغییر بده)
+// functions/qr.js
 import { toDataURL } from 'qrcode';
+import { PhotonImage, open_image, putImageData } from '@cf-wasm/photon';
 
-// این کتابخانه خالص JS هست و روی Workers عالی کار می‌کنه
-export async function onRequestGet(context) {  // تغییر به onRequestGet
-  const { request } = context;
+export const onRequestGet = async ({ request }) => {  // تغییر به onRequestGet برای GET
   const url = new URL(request.url);
   const text = url.searchParams.get('text') || url.searchParams.get('t') || 'https://example.com';
 
@@ -28,7 +27,6 @@ export async function onRequestGet(context) {  // تغییر به onRequestGet
     // دریافت بک‌گراند از public/qr-background.jpg
     const bgResponse = await fetch(new URL('/qr-background.jpg', request.url));
     if (!bgResponse.ok) {
-      // اگر بک‌گراند نبود، فقط QR رو نشون بده
       return new Response(qrBuffer, {
         headers: {
           'Content-Type': 'image/png',
@@ -40,23 +38,20 @@ export async function onRequestGet(context) {  // تغییر به onRequestGet
     const bgArrayBuffer = await bgResponse.arrayBuffer();
     const bgBuffer = new Uint8Array(bgArrayBuffer);
 
-    // ترکیب QR روی بک‌گراند
-    // نکته: اگر @cf-wasm/imaging کار نکرد، جایگزین کن با @cf-wasm/png یا sharp (با nodejs_compat)
-    const { Image } = await import('@cf-wasm/imaging');  // اگر error داد، پکیج رو چک کن
+    // استفاده از Photon برای ترکیب تصاویر
+    const background = open_image(bgBuffer);  // باز کردن بک‌گراند
+    const qrImage = open_image(qrBuffer);    // باز کردن QR
 
-    const background = await Image.fromArrayBuffer(bgBuffer);
-    const qrImage = await Image.fromArrayBuffer(qrBuffer);
+    // تغییر اندازه QR به 550x550
+    qrImage.resize(550, 550, 1);  // 1 = Lanczos3 sampling
 
-    // تغییر اندازه QR به ۵۵۰x۵۵۰
-    qrImage.resize(550, 550);
+    // قرار دادن QR در مرکز بک‌گراند
+    const top = (background.get_height() - 550) / 2;
+    const left = (background.get_width() - 550) / 2;
+    background.put_image(qrImage, left, top);
 
-    // قرار دادن QR در مرکز
-    background.composite(qrImage, {
-      top: (background.height - 550) / 2,
-      left: (background.width - 550) / 2,
-    });
-
-    const finalBuffer = await background.encode('png');
+    // انکود نهایی به PNG
+    const finalBuffer = background.get_bytes_png();
 
     return new Response(finalBuffer, {
       headers: {
