@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "qrcode": "^1.5.4",
-    "@cf-wasm/imaging": "^0.1.4"
+    "@cf-wasm/png": "^0.1.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241022.0",
