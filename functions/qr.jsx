@@ -1,52 +1,65 @@
-import { ImageResponse } from '@vercel/og';
-import QRCode from 'qrcode';
+import { ImageResponse } from "@vercel/og";
+import QRCode from "qrcode";
 
 export const config = {
-  runtime: 'edge',
+  runtime: "edge",
 };
 
-const BACKGROUND_URL = "https://i.ibb.co/fJ7nmz8/qr.jpg";
+export default async function handler(request) {
+  const { searchParams } = new URL(request.url);
+  const text = searchParams.get("text") || "EMPTY";
 
-export async function onRequest(context) {
-  const { searchParams } = new URL(context.request.url);
-  const link = searchParams.get('text');
-
-  if (!link) {
-    return new Response('Missing text param', { status: 400 });
-  }
-
-  const qrDataUrl = await QRCode.toDataURL(link, {
-    width: 400,
+  // ساخت بارکد به‌صورت dataURL
+  const qrDataURL = await QRCode.toDataURL(text, {
     margin: 1,
+    scale: 8,
     color: {
-      dark: '#000000',
-      light: '#ffffff00',
-    },
+      dark: "#000000",
+      light: "#ffffff00"
+    }
   });
+
+  // گرفتن پس‌زمینه از پوشه public
+  const bgURL = new URL("/qr-background.jpg", request.url).toString();
 
   return new ImageResponse(
     (
       <div
         style={{
-          display: 'flex',
-          width: '100%',
-          height: '100%',
-          backgroundImage: `url(${BACKGROUND_URL})`,
-          backgroundSize: 'cover',
-          justifyContent: 'center',
-          alignItems: 'center',
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
         }}
       >
+        {/* پس‌زمینه */}
         <img
-          src={qrDataUrl}
+          src={bgURL}
           style={{
-            width: '450px',
-            height: '450px',
-            marginTop: '50px',
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover"
+          }}
+        />
+
+        {/* تصویر QR روی پس‌زمینه */}
+        <img
+          src={qrDataURL}
+          width={400}
+          height={400}
+          style={{
+            zIndex: 10,
           }}
         />
       </div>
     ),
-    { width: 1080, height: 1080 }
+    {
+      width: 1080,
+      height: 1080,
+    }
   );
 }
