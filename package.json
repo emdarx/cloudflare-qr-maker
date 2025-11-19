@@ -1,0 +1,13 @@
+{
+  "name": "qr-overlay-service",
+  "version": "1.0.0",
+  "description": "Generate QR code overlaid on a background image using Cloudflare Pages",
+  "scripts": {
+    "build": "" 
+  },
+  "dependencies": {
+    "@vercel/og": "^0.6.0",
+    "qrcode": "^1.5.3",
+    "react": "^18.2.0"
+  }
+}
