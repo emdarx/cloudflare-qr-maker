@@ -1,16 +1,19 @@
 {
-  "name": "cf-qr-generator",
+  "name": "cloudflare-qr-generator",
   "version": "1.0.0",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "dev": "wrangler pages dev ./ --compatibility-date=2024-01-01",
-    "build": "echo 'Cloudflare Pages handles build automatically'",
-    "start": "wrangler pages dev ./"
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
   },
   "dependencies": {
-    "@vercel/og": "0.6.2",
-    "qrcode": "1.5.3",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "qrcode.react": "^3.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "wrangler": "^3.78.9"
   }
 }
