@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "qrcode": "^1.5.4",
-    "@cf-wasm/png": "^0.1.4"
+    "@cf-wasm/photon": "^0.1.24"  // جایگزین با photon – نسخه جدید
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241022.0",
