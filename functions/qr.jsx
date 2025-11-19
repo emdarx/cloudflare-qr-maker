@@ -1,75 +1,70 @@
-import { QRCodeCanvas } from 'qrcode.react'; // ما از کتابخانه qrcode.react استفاده می‌کنیم
-import ReactDOMServer from 'react-dom/server';
-import { Buffer } from 'buffer';
-import sharp from 'sharp';
+// functions/qr.jsx
+import { toDataURL } from 'qrcode';
 
-// بک‌گراند پیش‌فرض (اگر کاربر نذاشت)
-const BACKGROUND_PATH = '/qr-background.jpg';
-
-export const onRequestGet = async ({ request, env, params }) => {
+// این کتابخانه خالص JS هست و روی Workers عالی کار می‌کنه
+export const onRequest = async ({ request }) => {
   const url = new URL(request.url);
-  const text = url.searchParams.get('text') || url.searchParams.get('t');
+  const text = url.searchParams.get('text') || url.searchParams.get('t') || 'https://example.com';
 
-  if (!text) {
-    return new Response('❌ پارامتر text یا t الزامی است\nمثال: /qr?text=سلام', {
-      status: 400,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  }
-
-  // تنظیمات QR Code
-  const qrSize = 512;
-  const margin = 30; // حاشیه سفید دور QR
-
-  // تولید SVG از QR Code با qrcode.react
-  const qrSvg = ReactDOMServer.renderToStaticMarkup(
-    <QRCodeCanvas
-      value={text}
-      size={qrSize}
-      level="H"
-      imageSettings={{
-        src: '', // می‌تونی لوگوی وسط QR هم بذاری
-        height: 80,
-        width: 80,
-        excavate: true,
-        opacity: 1,
-      }}
-      fgColor="#000000"
-      bgColor="#ffffff"
-      includeMargin={false}
-    />
-  );
-
-  // تبدیل SVG به PNG با sharp
-  const qrBuffer = await sharp(Buffer.from(qrSvg))
-    .png()
-    .toBuffer();
-
-  // دریافت بک‌گراند (از public)
-  const backgroundUrl = BACKGROUND_PATH;
-  const bgResponse = await fetch(`${url.origin}${backgroundUrl}`);
-  if (!bgResponse.ok) {
-    return new Response('بک‌گراند پیدا نشد: public' + backgroundUrl, { status: 404 });
-  }
-  const bgBuffer = Buffer.from(await bgResponse.arrayBuffer());
-
-  // ترکیب QR روی بک‌گراند (وسط چین)
-  const finalImage = await sharp(bgBuffer)
-    .composite([
-      {
-        input: qrBuffer,
-        gravity: 'centre', // دقیقاً وسط تصویر
-        // اگر بخوای کمی بالاتر یا پایین‌تر بذاری می‌تونی از top/left استفاده کنی
+  try {
+    // تولید QR Code به صورت DataURL (PNG)
+    const qrDataUrl = await toDataURL(text, {
+      width: 800,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
       },
-    ])
-    .png() // یا .jpeg() اگر بک‌گراندت jpg هست
-    .toBuffer();
+      errorCorrectionLevel: 'H',
+    });
 
-  return new Response(finalImage, {
-    headers: {
-      'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=31536000, immutable',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
+    // استخراج base64 از dataURL
+    const base64 = qrDataUrl.replace(/^data:image\/png;base64,/, '');
+
+    // تبدیل base64 به Buffer
+    const qrBuffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+
+    // دریافت بک‌گراند از public/qr-background.jpg
+    const bgResponse = await fetch(new URL('/qr-background.jpg', request.url));
+    if (!bgResponse.ok) {
+      // اگر بک‌گراند نبود، فقط QR رو نشون بده
+      return new Response(qrBuffer, {
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        },
+      });
+    }
+
+    const bgArrayBuffer = await bgResponse.arrayBuffer();
+    const bgBuffer = new Uint8Array(bgArrayBuffer);
+
+    // ترکیب QR روی بک‌گراند با Canvas خالص (بدون DOM!)
+    // از @cf-wasm/imaging استفاده می‌کنیم که رسمی Cloudflare هست
+    const { Image } = await import('@cf-wasm/imaging');
+
+    const background = await Image.fromArrayBuffer(bgBuffer);
+    const qrImage = await Image.fromArrayBuffer(qrBuffer);
+
+    // تغییر اندازه QR به ۵۵۰x۵۵۰ (یا هر سایزی که دوست داری)
+    qrImage.resize(550, 550);
+
+    // قرار دادن QR در مرکز بک‌گراند
+    background.composite(qrImage, {
+      top: (background.height - 550) / 2,
+      left: (background.width - 550) / 2,
+    });
+
+    const finalBuffer = await background.encode('png');
+
+    return new Response(finalBuffer, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch (e) {
+    return new Response('خطا در تولید QR: ' + e.message, { status: 500 });
+  }
 };
